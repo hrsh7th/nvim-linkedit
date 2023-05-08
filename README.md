@@ -1,6 +1,10 @@
-# Development
+# linkedit
 
-## CI Setup
+The plugin supports `textDocument/linkedEditingRange` that defines in LSP spec.
 
-Add the `GITHUB_TOKEN` repository environment that must have `commit`/`push` permissions.
+# usage
 
+```lua
+require('linkedit').setup {
+}
+```
