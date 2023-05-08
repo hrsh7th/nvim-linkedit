@@ -13,6 +13,6 @@
     "lua/?/init.lua"
   ],
   "workspace.library": [
-    "../lua-language-server/meta/34d/luv/library"
+    "tmp/lua-language-server/meta/34d/luv/library"
   ]
 }
