@@ -50,7 +50,6 @@ jobs:
         uses: mrcjkb/lua-typecheck-action@v0.1.2
         with:
           configpath: ".luarc.json"
-          directories: "lua"
 
       - name: Format code
         uses: JohnnyMorganz/stylua-action@v2

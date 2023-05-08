@@ -12,7 +12,6 @@
     "lua/?.lua",
     "lua/?/init.lua"
   ],
-  "workspace.checkThirdParty": true,
   "workspace.library": [
     "${3rd}/luv/library"
   ]
