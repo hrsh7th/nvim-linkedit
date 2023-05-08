@@ -5,7 +5,8 @@
     "before_each",
     "after_each",
     "describe",
-    "it"
+    "it",
+    "assert"
   ],
   "runtime.version": "LuaJIT",
   "runtime.path": [
