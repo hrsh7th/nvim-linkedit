@@ -12,7 +12,7 @@ format:
 
 .PHONY: typecheck
 typecheck:
-	rm -Rf $(pwd)/tmp/typecheck; lua-language-server --check $(pwd)/lua --configpath=$(pwd)/.luarc.json --logpath=$(pwd)/tmp/typecheck > /dev/null; cat ./tmp/typecheck/check.json 2> /dev/null
+	rm -Rf $(pwd)/tmp/typecheck ||:; lua-language-server --check $(pwd)/lua --configpath=$(pwd)/.luarc.json --logpath=$(pwd)/tmp/typecheck > /dev/null; cat ./tmp/typecheck/check.json 2> /dev/null ||:
 
 .PHONY: check
 check:
