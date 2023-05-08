@@ -96,6 +96,12 @@ function linkedit.sync()
   local cursor = vim.api.nvim_win_get_cursor(0)
   cursor[1] = cursor[1] - 1
 
+  -- ignote changes that occurred by undo/redo.
+  local undotree = vim.fn.undotree()
+  if undotree.seq_last ~= undotree.seq_cur then
+    return
+  end
+
   ---@type number[]
   local mark_ids = kit.map(vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {
   }), function(mark)
