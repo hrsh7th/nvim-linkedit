@@ -1,4 +1,5 @@
 local kit = require('linkedit.kit')
+local RegExp = require('linkedit.kit.Vim.RegExp')
 local Async = require('linkedit.kit.Async')
 local Config = require('linkedit.kit.App.Config')
 
@@ -6,7 +7,8 @@ local Config = require('linkedit.kit.App.Config')
 ---@field public fetch fun(self: unknown, params: linkedit.kit.LSP.LinkedEditingRangeParams): linkedit.kit.Async.AsyncTask linkedit.kit.LSP.TextDocumentLinkedEditingRangeResponse
 
 ---@class linkedit.kit.App.Config.Schema
----@field public operator boolean
+---@field public fetch_timeout number
+---@field public keyword_pattern string
 
 local ns = vim.api.nvim_create_namespace('linkedit')
 
@@ -44,12 +46,14 @@ local function set_text_for_mark(mark_id, text)
   vim.api.nvim_buf_set_text(0, range.s[1], range.s[2], range.e[1], range.e[2], vim.split(text, '\n', { plain = true }))
 end
 
-local linkedit = {}
+local linkedit = {
+  config = Config.new({
+    fetch_timeout = 200,
+    keyword_pattern = [[\k*]]
+  })
+}
 
-linkedit.config = Config.new({
-  operator = true,
-})
-
+---Setup interface for global/filetype/buffer.
 linkedit.setup = linkedit.config:create_setup_interface()
 
 ---@type table<string, linkedit.Source>
@@ -82,9 +86,10 @@ function linkedit.fetch()
         end_right_gravity = true,
       })
     end
-  end):sync(200)
+  end):sync(linkedit.config:get().fetch_timeout)
 end
 
+---Sync all linked editing range.
 function linkedit.sync()
   local cursor = vim.api.nvim_win_get_cursor(0)
   cursor[1] = cursor[1] - 1
@@ -111,8 +116,13 @@ function linkedit.sync()
     return
   end
 
-  -- apply all marks.
+  -- get origin text.
   local origin_text = get_text_from_mark(origin_mark_id)
+  if RegExp.get('^' .. linkedit.config:get().keyword_pattern .. '$'):match_str(origin_text) ~= 0 then
+    return
+  end
+
+  -- apply all marks.
   for _, mark_id in ipairs(mark_ids) do
     if mark_id ~= origin_mark_id then
       set_text_for_mark(mark_id, origin_text)
