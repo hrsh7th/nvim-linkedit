@@ -1,5 +1,3 @@
-local linkedit = require('linkedit')
-
 local group = vim.api.nvim_create_augroup('linkedit', {
   clear = true,
 })
@@ -13,14 +11,20 @@ vim.api.nvim_create_autocmd({ 'ModeChanged' }, {
     vim.api.nvim_replace_termcodes('*:no<C-v>', true, true, true)
   },
   callback = function()
-    linkedit.fetch()
+    local linkedit = require('linkedit')
+    if linkedit.config:get().enabled then
+      linkedit.fetch()
+    end
   end
 })
 vim.api.nvim_create_autocmd('InsertEnter', {
   group = group,
   pattern = '*',
   callback = function()
-    linkedit.fetch()
+    local linkedit = require('linkedit')
+    if linkedit.config:get().enabled then
+      linkedit.fetch()
+    end
   end
 })
 
@@ -28,7 +32,10 @@ vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI', 'TextChangedP' }, {
   group = group,
   pattern = '*',
   callback = function()
-    linkedit.sync()
+    local linkedit = require('linkedit')
+    if linkedit.config:get().enabled then
+      linkedit.sync()
+    end
   end
 })
 

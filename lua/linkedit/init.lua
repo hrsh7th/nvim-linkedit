@@ -7,6 +7,7 @@ local Config = require('linkedit.kit.App.Config')
 ---@field public fetch fun(self: unknown, params: linkedit.kit.LSP.LinkedEditingRangeParams): linkedit.kit.Async.AsyncTask linkedit.kit.LSP.TextDocumentLinkedEditingRangeResponse
 
 ---@class linkedit.kit.App.Config.Schema
+---@field public enabled boolean
 ---@field public fetch_timeout number
 ---@field public keyword_pattern string
 
@@ -48,6 +49,7 @@ end
 
 local linkedit = {
   config = Config.new({
+    enabled = true,
     fetch_timeout = 200,
     keyword_pattern = [[\k*]]
   })
