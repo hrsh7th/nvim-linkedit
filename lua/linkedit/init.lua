@@ -2,16 +2,17 @@ local kit = require('linkedit.kit')
 local RegExp = require('linkedit.kit.Vim.RegExp')
 local Async = require('linkedit.kit.Async')
 local Config = require('linkedit.kit.App.Config')
+local ns = vim.api.nvim_create_namespace('linkedit')
 
 ---@class linkedit.Source
 ---@field public fetch fun(self: unknown, params: linkedit.kit.LSP.LinkedEditingRangeParams): linkedit.kit.Async.AsyncTask linkedit.kit.LSP.TextDocumentLinkedEditingRangeResponse
 
 ---@class linkedit.kit.App.Config.Schema
 ---@field public enabled boolean
+---@field public sources { name: string }[]
 ---@field public fetch_timeout number
 ---@field public keyword_pattern string
-
-local ns = vim.api.nvim_create_namespace('linkedit')
+---@field public debug? boolean
 
 ---Get range from mark_id.
 ---@param mark_id number
@@ -50,8 +51,13 @@ end
 local linkedit = {
   config = Config.new({
     enabled = true,
+    sources = {
+      { name = 'lsp_linked_editing_range' },
+      -- { name = 'nvim_treesitter_locals' }, disabled by default.
+    },
     fetch_timeout = 200,
-    keyword_pattern = [[\k*]]
+    keyword_pattern = [[\k*]],
+    debug = false,
   })
 }
 
@@ -61,24 +67,40 @@ linkedit.setup = linkedit.config:create_setup_interface()
 ---@type table<string, linkedit.Source>
 linkedit.registry = {}
 
+---Clear current state.
+function linkedit.clear()
+  vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
+end
+
 ---Fetch linked editing ranges.
 function linkedit.fetch()
+  linkedit.clear()
+
   Async.run(function()
     local params = vim.lsp.util.make_position_params()
 
     ---@type linkedit.kit.LSP.TextDocumentLinkedEditingRangeResponse
     local response
-    for _, source in pairs(linkedit.registry) do
-      response = source:fetch(params):await()
-      if response then
-        break
+    for _, source_config in ipairs(linkedit.config:get().sources) do
+      local source = linkedit.registry[source_config.name]
+      if source then
+        local task = source:fetch(params)
+        if linkedit.config:get().debug then
+          task = task:catch(function(err)
+            print(vim.inspect(err))
+            return nil
+          end)
+        end
+        response = task:await()
+        if response then
+          break
+        end
       end
     end
     if not response then
       return
     end
 
-    vim.api.nvim_buf_clear_namespace(0, ns, 0, -1)
     for _, range in ipairs(response.ranges --[=[@as linkedit.kit.LSP.Range[]]=]) do
       vim.api.nvim_buf_set_extmark(0, ns, range.start.line, range.start.character, {
         end_line = range['end'].line,
@@ -138,6 +160,7 @@ function linkedit.sync()
   end
 end
 
-linkedit.registry['lsp'] = require('linkedit.source.lsp').new()
+linkedit.registry['lsp_linked_editing_range'] = require('linkedit.source.lsp_linked_editing_range').new()
+linkedit.registry['nvim_treesitter_locals'] = require('linkedit.source.nvim_treesitter_locals').new()
 
 return linkedit
