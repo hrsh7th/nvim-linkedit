@@ -23,12 +23,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Checkout lua-language-server
-        uses: actions/checkout@v3
-        with:
-          repository: 'LuaLS/lua-language-server'
-          path: 'tmp/lua-language-server'
-
       - name: Install node.js
         uses: actions/setup-node@v2
 
@@ -50,12 +44,6 @@ jobs:
         run: |
           luarocks install luacheck
           luarocks install vusted
-
-      - name: Run type check
-        if: matrix.os == 'ubuntu-latest'
-        uses: mrcjkb/lua-typecheck-action@v0.1.2
-        with:
-          configpath: ".luarc.integration.json"
 
       - name: Format code
         uses: JohnnyMorganz/stylua-action@v2

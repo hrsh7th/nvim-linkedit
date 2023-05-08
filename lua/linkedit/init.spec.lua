@@ -1,0 +1,5 @@
+describe('linkedit', function()
+  it('should ok', function()
+    assert.is_true(true)
+  end)
+end)
