@@ -87,7 +87,7 @@ function linkedit.fetch()
         local task = source:fetch(params)
         if linkedit.config:get().debug then
           task = task:catch(function(err)
-            print(vim.inspect(err))
+            vim.print(err)
             return nil
           end)
         end
