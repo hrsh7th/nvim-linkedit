@@ -53,7 +53,6 @@ local linkedit = {
     enabled = true,
     sources = {
       { name = 'lsp_linked_editing_range' },
-      -- { name = 'nvim_treesitter_locals' }, disabled by default.
     },
     fetch_timeout = 200,
     keyword_pattern = [[\k*]],
@@ -76,44 +75,51 @@ end
 function linkedit.fetch()
   linkedit.clear()
 
-  Async.run(function()
-    local params = vim.lsp.util.make_position_params()
+  local ok, res = pcall(function()
+    Async.run(function()
+      local params = vim.lsp.util.make_position_params()
 
-    ---@type linkedit.kit.LSP.TextDocumentLinkedEditingRangeResponse
-    local response
-    for _, source_config in ipairs(linkedit.config:get().sources) do
-      local source = linkedit.registry[source_config.name]
-      if source then
-        response = source:fetch(params):catch(function(err)
-          if linkedit.config:get().debug then
-            vim.print(err)
+      ---@type linkedit.kit.LSP.TextDocumentLinkedEditingRangeResponse
+      local response
+      for _, source_config in ipairs(linkedit.config:get().sources) do
+        local source = linkedit.registry[source_config.name]
+        if source then
+          response = source:fetch(params):catch(function(err)
+            if linkedit.config:get().debug then
+              vim.print(err)
+            end
+            return nil
+          end):await()
+          if response and response.ranges and #response.ranges > 0 then
+            break
           end
-          return nil
-        end):await()
-        if response and response.ranges and #response.ranges > 0 then
-          break
         end
       end
-    end
-    if not response then
-      return
-    end
-
-    local unique = {}
-    for _, range in ipairs(response.ranges --[=[@as linkedit.kit.LSP.Range[]]=]) do
-      local range_id = table.concat({ range.start.line, range.start.character, range['end'].line, range['end'].character }, ':')
-      if not unique[range_id] then
-        unique[range_id] = true
-        vim.api.nvim_buf_set_extmark(0, ns, range.start.line, range.start.character, {
-          end_line = range['end'].line,
-          end_col = range['end'].character,
-          hl_group = 'LinkedEditingRange',
-          right_gravity = false,
-          end_right_gravity = true,
-        })
+      if not response then
+        return
       end
+
+      local unique = {}
+      for _, range in ipairs(response.ranges --[=[@as linkedit.kit.LSP.Range[]]=]) do
+        local range_id = table.concat({ range.start.line, range.start.character, range['end'].line, range['end'].character }, ':')
+        if not unique[range_id] then
+          unique[range_id] = true
+          vim.api.nvim_buf_set_extmark(0, ns, range.start.line, range.start.character, {
+            end_line = range['end'].line,
+            end_col = range['end'].character,
+            hl_group = 'LinkedEditingRange',
+            right_gravity = false,
+            end_right_gravity = true,
+          })
+        end
+      end
+    end):sync(linkedit.config:get().fetch_timeout)
+  end)
+  if not ok then
+    if linkedit.config:get().debug then
+      vim.print(res)
     end
-  end):sync(linkedit.config:get().fetch_timeout)
+  end
 end
 
 ---Sync all linked editing range.
@@ -163,6 +169,6 @@ function linkedit.sync()
 end
 
 linkedit.registry['lsp_linked_editing_range'] = require('linkedit.source.lsp_linked_editing_range').new()
-linkedit.registry['nvim_treesitter_locals'] = require('linkedit.source.nvim_treesitter_locals').new()
+linkedit.registry['lsp_document_highlight'] = require('linkedit.source.lsp_document_highlight').new()
 
 return linkedit

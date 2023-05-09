@@ -26,9 +26,8 @@ The `textDocument/linkedEditingRange` source.
 This source works only if your language server supports that method.
 
 
-### nvim_treesitter_locals (default: disabled)
+### lsp_document_highlight (default: disabled)
 
-This source is highly experiment.
-Use the power of `nvim-treesitter.locals`.
-
+This source is highly experimental.
+Use `textDocument/definition` and `textDocument/documentHighlight`.
 
