@@ -28,28 +28,13 @@ local memoize = setmetatable({
   end
 })
 
+local function is_insert_mode()
+  return vim.api.nvim_get_mode().mode == 'i'
+end
+
 local group = vim.api.nvim_create_augroup('linkedit', {
   clear = true,
 })
-
-do
-  local cursor_row = unpack(vim.api.nvim_win_get_cursor(0))
-  vim.api.nvim_create_autocmd({ 'CursorMoved' }, {
-    group = group,
-    pattern = '*',
-    callback = function()
-      local linkedit = require('linkedit')
-      if linkedit.config:get().enabled then
-        local new_cursor_row = unpack(vim.api.nvim_win_get_cursor(0))
-        if cursor_row ~= new_cursor_row then
-          cursor_row = new_cursor_row
-          linkedit.clear()
-          memoize:clear()
-        end
-      end
-    end
-  })
-end
 
 vim.api.nvim_create_autocmd({ 'ModeChanged' }, {
   group = group,
@@ -67,8 +52,44 @@ vim.api.nvim_create_autocmd({ 'ModeChanged' }, {
     local linkedit = require('linkedit')
     if linkedit.config:get().enabled then
       linkedit.fetch()
+      vim.cmd.redraw()
       memoize:update()
     end
+    vim.schedule(function()
+      if is_insert_mode() then
+        vim.api.nvim_create_autocmd('InsertLeave', {
+          pattern = '*',
+          once = true,
+          callback = function()
+            linkedit.clear()
+            memoize:clear()
+          end
+        })
+      else
+        -- Support `diwi` case.
+        vim.api.nvim_create_autocmd('CursorMoved', {
+          pattern = '*',
+          once = true,
+          callback = function()
+            vim.schedule(function()
+              if is_insert_mode() then
+                vim.api.nvim_create_autocmd('InsertLeave', {
+                  pattern = '*',
+                  once = true,
+                  callback = function()
+                    linkedit.clear()
+                    memoize:clear()
+                  end
+                })
+              else
+                linkedit.clear()
+                memoize:clear()
+              end
+            end)
+          end
+        })
+      end
+    end)
   end)
 })
 

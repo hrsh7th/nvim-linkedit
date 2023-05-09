@@ -30,15 +30,15 @@ function Source:fetch(params)
       return Async.resolve(nil)
     end
 
+    local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    cursor[1] = cursor[1] - 1
+
     ---@type linkedit.kit.LSP.TextDocumentDefinitionResponse
     local definitions = client:textDocument_definition(params --[[@as linkedit.kit.LSP.DefinitionParams]]):await()
     if not definitions then
       return Async.resolve(nil)
     end
-
-    local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
-    local cursor = vim.api.nvim_win_get_cursor(0)
-    cursor[1] = cursor[1] - 1
 
     -- to array.
     definitions = kit.to_array(definitions)
