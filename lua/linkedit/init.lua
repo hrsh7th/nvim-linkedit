@@ -98,6 +98,9 @@ function linkedit.fetch()
       if not response then
         return
       end
+      if #response.ranges < 2 then
+        return
+      end
 
       local unique = {}
       for _, range in ipairs(response.ranges --[=[@as linkedit.kit.LSP.Range[]]=]) do

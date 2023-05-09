@@ -40,25 +40,41 @@ function Source:fetch(params)
     local cursor = vim.api.nvim_win_get_cursor(0)
     cursor[1] = cursor[1] - 1
 
-    ---@type linkedit.kit.LSP.Range?
-    local definition_range = nil
-    for _, location in ipairs(kit.to_array(definitions)) do
+    -- to array.
+    definitions = kit.to_array(definitions)
+
+    -- to LocationLink.
+    definitions = vim.tbl_map(function(location)
       if location and location.uri then
-        location = {
+        return {
           targetUri = location.uri,
           targetRange = location.range,
           targetSelectionRange = location.range,
         }
       end
-      local lines = vim.api.nvim_buf_get_lines(bufnr, location.targetRange.start.line, location.targetRange['end'].line + 1, false)
-      local range = Range.to_utf8(lines[1], lines[#lines], location.targetRange, client.client.offset_encoding)
+      return location
+    end, definitions)
+
+    -- to Buffer Location.
+    definitions = vim.tbl_filter(function(location)
+      return location.targetUri == params.textDocument.uri
+    end, definitions)
+
+    -- ignore if multiple buffer locations.
+    if #definitions ~= 1 then
+      return
+    end
+
+    ---@type linkedit.kit.LSP.Range?
+    local definition_range = nil
+    for _, location in ipairs(kit.to_array(definitions)) do
+      local lines = vim.api.nvim_buf_get_lines(bufnr, location.targetSelectionRange.start.line, location.targetSelectionRange['end'].line + 1, false)
+      local range = Range.to_utf8(lines[1], lines[#lines], location.targetSelectionRange, client.client.offset_encoding)
       local included = true
-      included = included and (location.targetUri == params.textDocument.uri)
       included = included and (range.start.line < cursor[1] or (range.start.line == cursor[1] and range.start.character <= cursor[2]))
       included = included and (range['end'].line > cursor[1] or (range['end'].line == cursor[1] and range['end'].character >= cursor[2]))
       if included then
         definition_range = range
-        break
       end
     end
     if not definition_range then
