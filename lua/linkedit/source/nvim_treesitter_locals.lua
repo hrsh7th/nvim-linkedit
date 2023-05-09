@@ -2,6 +2,22 @@ local kit = require('linkedit.kit')
 local Async = require('linkedit.kit.Async')
 local has_locals, locals = pcall(require, 'nvim-treesitter.locals')
 
+---@param node userdata
+---@return linkedit.kit.LSP.Range
+local function node_to_linked_editing_range(node)
+  local row1, col1, row2, col2 = node:range()
+  return {
+    start = {
+      line = row1,
+      character = col1,
+    },
+    ['end'] = {
+      line = row2,
+      character = col2,
+    }
+  }
+end
+
 ---@type linkedit.Source
 local Source = {}
 Source.__index = Source
@@ -18,8 +34,6 @@ function Source:fetch(params)
     end
 
     local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
-    local filetype = vim.api.nvim_buf_get_option(bufnr, 'filetype')
-    vim.treesitter.get_parser(bufnr, filetype):parse()
 
     local cursor = vim.api.nvim_win_get_cursor(0)
     cursor[1] = cursor[1] - 1
@@ -41,26 +55,16 @@ function Source:fetch(params)
     end
 
     local scopes = locals.get_definition_scopes(origin_node, bufnr)
-    local ranges = {}
+    local ranges = { node_to_linked_editing_range(origin_node) }
     for _, scope in ipairs(scopes) do
       local usages = locals.find_usages(origin_node, scope, bufnr)
       if usages then
         ranges = kit.concat(ranges, kit.map(usages, function(usage)
-          local row1, col1, row2, col2 = usage:range()
-          return {
-            start = {
-              line = row1,
-              character = col1,
-            },
-            ['end'] = {
-              line = row2,
-              character = col2,
-            }
-          }
+          return node_to_linked_editing_range(usage)
         end))
       end
     end
-    if #ranges == 0 then
+    if #ranges == 1 then
       return nil
     end
     return { ranges = ranges }

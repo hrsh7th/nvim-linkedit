@@ -84,15 +84,13 @@ function linkedit.fetch()
     for _, source_config in ipairs(linkedit.config:get().sources) do
       local source = linkedit.registry[source_config.name]
       if source then
-        local task = source:fetch(params)
-        if linkedit.config:get().debug then
-          task = task:catch(function(err)
+        response = source:fetch(params):catch(function(err)
+          if linkedit.config:get().debug then
             vim.print(err)
-            return nil
-          end)
-        end
-        response = task:await()
-        if response then
+          end
+          return nil
+        end):await()
+        if response and response.ranges and #response.ranges > 0 then
           break
         end
       end
@@ -101,14 +99,19 @@ function linkedit.fetch()
       return
     end
 
+    local unique = {}
     for _, range in ipairs(response.ranges --[=[@as linkedit.kit.LSP.Range[]]=]) do
-      vim.api.nvim_buf_set_extmark(0, ns, range.start.line, range.start.character, {
-        end_line = range['end'].line,
-        end_col = range['end'].character,
-        hl_group = 'LinkedEditingRange',
-        right_gravity = false,
-        end_right_gravity = true,
-      })
+      local range_id = table.concat({ range.start.line, range.start.character, range['end'].line, range['end'].character }, ':')
+      if not unique[range_id] then
+        unique[range_id] = true
+        vim.api.nvim_buf_set_extmark(0, ns, range.start.line, range.start.character, {
+          end_line = range['end'].line,
+          end_col = range['end'].character,
+          hl_group = 'LinkedEditingRange',
+          right_gravity = false,
+          end_right_gravity = true,
+        })
+      end
     end
   end):sync(linkedit.config:get().fetch_timeout)
 end
@@ -125,8 +128,7 @@ function linkedit.sync()
   end
 
   ---@type number[]
-  local mark_ids = kit.map(vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {
-  }), function(mark)
+  local mark_ids = kit.map(vim.api.nvim_buf_get_extmarks(0, ns, 0, -1, {}), function(mark)
     return mark[1]
   end)
 

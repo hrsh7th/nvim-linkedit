@@ -26,6 +26,25 @@ local group = vim.api.nvim_create_augroup('linkedit', {
   clear = true,
 })
 
+do
+  local cursor_row = unpack(vim.api.nvim_win_get_cursor(0))
+  vim.api.nvim_create_autocmd({ 'CursorMoved' }, {
+    group = group,
+    pattern = '*',
+    callback = function()
+      local linkedit = require('linkedit')
+      if linkedit.config:get().enabled then
+        local new_cursor_row = unpack(vim.api.nvim_win_get_cursor(0))
+        if cursor_row ~= new_cursor_row then
+          cursor_row = new_cursor_row
+          linkedit.clear()
+          memoize:update()
+        end
+      end
+    end
+  })
+end
+
 vim.api.nvim_create_autocmd({ 'ModeChanged' }, {
   group = group,
   pattern = {
@@ -58,3 +77,5 @@ vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI', 'TextChangedP' }, {
     end
   end)
 })
+
+vim.api.nvim_set_hl(0, 'LinkedEditingRange', { link = 'Substitute', default = true })
