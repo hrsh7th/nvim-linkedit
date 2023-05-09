@@ -3,6 +3,12 @@ local memoize = setmetatable({
   changedtick = nil,
   cursor_row = nil,
   cursor_col = nil,
+  clear = function(self)
+    self.bufnr = nil
+    self.changedtick = nil
+    self.cursor_row = nil
+    self.cursor_col = nil
+  end,
   update = function(self)
     self.bufnr = vim.api.nvim_get_current_buf()
     self.changedtick = vim.api.nvim_buf_get_changedtick(self.bufnr)
@@ -38,7 +44,7 @@ do
         if cursor_row ~= new_cursor_row then
           cursor_row = new_cursor_row
           linkedit.clear()
-          memoize:update()
+          memoize:clear()
         end
       end
     end
