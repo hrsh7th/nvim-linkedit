@@ -43,10 +43,7 @@ vim.api.nvim_create_autocmd({ 'ModeChanged' }, {
     '*:nov',
     '*:noV',
     vim.api.nvim_replace_termcodes('*:no<C-v>', true, true, true),
-    'n:i',
-    'v:i',
-    'V:i',
-    vim.api.nvim_replace_termcodes('<C-v>:i', true, true, true)
+    'n:i'
   },
   callback = memoize(function()
     local linkedit = require('linkedit')
@@ -55,18 +52,29 @@ vim.api.nvim_create_autocmd({ 'ModeChanged' }, {
       vim.cmd.redraw()
       memoize:update()
     end
+  end)
+})
+
+vim.api.nvim_create_autocmd({ 'ModeChanged' }, {
+  group = group,
+  pattern = {
+    'no:*',
+    'nov:*',
+    'noV:*',
+    vim.api.nvim_replace_termcodes('no<C-v>:*', true, true, true),
+    'i:n',
+  },
+  callback = memoize(function(e)
     vim.schedule(function()
-      if is_insert_mode() then
-        vim.api.nvim_create_autocmd('InsertLeave', {
-          pattern = '*',
-          once = true,
-          callback = function()
-            linkedit.clear()
-            memoize:clear()
-          end
-        })
-      else
-        -- Support `diwi` case.
+      local linkedit = require('linkedit')
+      if e.match == 'i:n' then
+        linkedit.clear()
+        memoize:clear()
+        return
+      end
+
+      -- operator-pending-mode -> not insert-mode.
+      if not is_insert_mode() then
         vim.api.nvim_create_autocmd('CursorMoved', {
           pattern = '*',
           once = true,

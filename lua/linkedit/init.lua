@@ -62,6 +62,9 @@ local linkedit = {
 
 ---Setup interface for global/filetype/buffer.
 linkedit.setup = linkedit.config:create_setup_interface()
+linkedit.setup.filetype('php', {
+  keyword_pattern = [[\$\?\k*]],
+})
 
 ---@type table<string, linkedit.Source>
 linkedit.registry = {}
