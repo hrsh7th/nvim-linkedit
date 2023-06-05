@@ -54,7 +54,7 @@ local linkedit = {
     sources = {
       { name = 'lsp_linked_editing_range' },
     },
-    fetch_timeout = 200,
+    fetch_timeout = 500,
     keyword_pattern = [[\k*]],
     debug = false,
   })
@@ -163,7 +163,7 @@ function linkedit.sync()
   -- get origin text.
   local origin_text = get_text_from_mark(origin_mark_id)
   if RegExp.get('^' .. linkedit.config:get().keyword_pattern .. '$'):match_str(origin_text) ~= 0 then
-    return
+    return linkedit.clear()
   end
 
   -- apply all marks.
