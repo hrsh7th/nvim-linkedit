@@ -8,8 +8,15 @@ The plugin supports `textDocument/linkedEditingRange` that defines in LSP spec.
 -- The default configuration.
 require('linkedit').setup {
   enabled = true,
-  fetch_timeout = 200,
-  keyword_pattern = [[\k*]]
+  fetch_timeout = 500,
+  keyword_pattern = [[\k*]],
+  debug = false,
+  sources = {
+    {
+      name = 'lsp_linked_editing_range',
+      on = { 'insert', 'operator' },
+    },
+  },
 }
 
 -- The filetype specific configuration example.
@@ -31,3 +38,19 @@ This source works only if your language server supports that method.
 This source is highly experimental.
 Use `textDocument/definition` and `textDocument/documentHighlight`.
 
+If you use this feature, I recommend to enable it only in `operator`.
+
+```lua
+require('linkedit').setup {
+  sources = {
+    {
+      name = 'lsp_linked_editing_range',
+      on = { 'insert', 'operator' },
+    },
+    {
+      name = 'lsp_document_highlight',
+      on = { 'operator' },
+    },
+  },
+}
+```

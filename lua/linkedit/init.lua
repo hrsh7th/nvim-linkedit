@@ -51,12 +51,15 @@ end
 local linkedit = {
   config = Config.new({
     enabled = true,
-    sources = {
-      { name = 'lsp_linked_editing_range' },
-    },
     fetch_timeout = 500,
     keyword_pattern = [[\k*]],
     debug = false,
+    sources = {
+      {
+        name = 'lsp_linked_editing_range',
+        on = { 'insert', 'operator' },
+      },
+    },
   })
 }
 
@@ -75,7 +78,7 @@ function linkedit.clear()
 end
 
 ---Fetch linked editing ranges.
-function linkedit.fetch()
+function linkedit.fetch(on)
   linkedit.clear()
 
   local ok, res = pcall(function()
@@ -85,16 +88,19 @@ function linkedit.fetch()
       ---@type linkedit.kit.LSP.TextDocumentLinkedEditingRangeResponse
       local response
       for _, source_config in ipairs(linkedit.config:get().sources) do
-        local source = linkedit.registry[source_config.name]
-        if source then
-          response = source:fetch(params):catch(function(err)
-            if linkedit.config:get().debug then
-              vim.print(err)
+        local on_config = kit.get(source_config, { 'on' }, { 'insert', 'operator' })
+        if vim.tbl_contains(on_config, on) then
+          local source = linkedit.registry[source_config.name]
+          if source then
+            response = source:fetch(params):catch(function(err)
+              if linkedit.config:get().debug then
+                vim.print(err)
+              end
+              return nil
+            end):await()
+            if response and response.ranges and #response.ranges > 0 then
+              break
             end
-            return nil
-          end):await()
-          if response and response.ranges and #response.ranges > 0 then
-            break
           end
         end
       end

@@ -36,6 +36,7 @@ local group = vim.api.nvim_create_augroup('linkedit', {
   clear = true,
 })
 
+-- Fetch handling.
 vim.api.nvim_create_autocmd({ 'ModeChanged' }, {
   group = group,
   pattern = {
@@ -45,16 +46,17 @@ vim.api.nvim_create_autocmd({ 'ModeChanged' }, {
     vim.api.nvim_replace_termcodes('*:no<C-v>', true, true, true),
     'n:i'
   },
-  callback = memoize(function()
+  callback = memoize(function(e)
     local linkedit = require('linkedit')
     if linkedit.config:get().enabled then
-      linkedit.fetch()
+      linkedit.fetch(e.match == 'n:i' and 'insert' or 'operator')
       vim.cmd.redraw()
       memoize:update()
     end
   end)
 })
 
+-- Clear handling.
 vim.api.nvim_create_autocmd({ 'ModeChanged' }, {
   group = group,
   pattern = {
