@@ -52,7 +52,7 @@ local linkedit = {
   config = Config.new({
     enabled = true,
     fetch_timeout = 500,
-    keyword_pattern = [[\k*]],
+    keyword_pattern = [[\h\?\%(\w*\)\%(\.\w*\)*]],
     debug = false,
     sources = {
       {

@@ -29,7 +29,7 @@ local memoize = setmetatable({
 })
 
 local function is_insert_mode()
-  return vim.api.nvim_get_mode().mode == 'i'
+  return vim.api.nvim_get_mode().mode:sub(1, 1) == 'i'
 end
 
 local group = vim.api.nvim_create_augroup('linkedit', {
@@ -43,7 +43,7 @@ vim.api.nvim_create_autocmd({ 'ModeChanged' }, {
     '*:no',
     '*:nov',
     '*:noV',
-    vim.api.nvim_replace_termcodes('*:no<C-v>', true, true, true),
+    '*:no',
     'n:i'
   },
   callback = memoize(function(e)
@@ -63,7 +63,7 @@ vim.api.nvim_create_autocmd({ 'ModeChanged' }, {
     'no:*',
     'nov:*',
     'noV:*',
-    vim.api.nvim_replace_termcodes('no<C-v>:*', true, true, true),
+    'no:*',
     'i:n',
   },
   callback = memoize(function(e)
