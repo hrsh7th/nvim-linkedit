@@ -17,7 +17,7 @@ function Source:fetch(params)
   return Async.run(function()
     ---@type linkedit.kit.LSP.Client?
     local client
-    for _, client_ in ipairs(vim.lsp.get_active_clients({ bufnr = 0 })) do
+    for _, client_ in ipairs(vim.lsp.get_clients({ bufnr = 0 })) do
       if kit.get(client_.server_capabilities, { 'linkedEditingRangeProvider' }) then
         client = Client.new(client_)
         break
