@@ -1,8 +1,8 @@
 local kit = require('linkedit.kit')
 local Async = require('linkedit.kit.Async')
 
----@alias linkedit.kit.Vim.Keymap.Keys { keys: string, remap: boolean }
----@alias linkedit.kit.Vim.Keymap.KeysSpecifier string|{ keys: string, remap: boolean }
+---@alias linkedit.kit.Vim.Keymap.Keys { keys: string, remap?: boolean }
+---@alias linkedit.kit.Vim.Keymap.KeysSpecifier string|linkedit.kit.Vim.Keymap.Keys
 
 ---@param keys linkedit.kit.Vim.Keymap.KeysSpecifier
 ---@return linkedit.kit.Vim.Keymap.Keys
@@ -22,6 +22,11 @@ Keymap._callbacks = {}
 ---@return string
 function Keymap.termcodes(keys)
   return vim.api.nvim_replace_termcodes(keys, true, true, true)
+end
+
+---Normalize keycode.
+function Keymap.normalize(s)
+  return vim.fn.keytrans(Keymap.termcodes(s))
 end
 
 ---Set callback for consuming next typeahead.
