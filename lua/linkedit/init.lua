@@ -181,6 +181,6 @@ function linkedit.sync()
 end
 
 linkedit.registry['lsp_linked_editing_range'] = require('linkedit.source.lsp_linked_editing_range').new()
-linkedit.registry['lsp_document_highlight'] = require('linkedit.source.lsp_document_highlight').new()
+linkedit.registry['lsp_rename'] = require('linkedit.source.lsp_rename').new()
 
 return linkedit
